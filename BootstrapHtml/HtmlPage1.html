@@ -1,0 +1,96 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+	<meta charset="utf-8" />
+    <link href="Content/bootstrap.min.css" rel="stylesheet" />
+    <script src="Scripts/knockout-3.4.0.js"></script>
+    <script src="Scripts/jquery-2.2.3.min.js"></script>
+    <script src="Scripts/bootstrap.min.js"></script>
+</head>
+<body>
+
+    <table>
+        <thead>
+            <tr>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+
+        <tbody data-bind="foreach:activeItems()">
+            <tr>
+                <td data-bind="text:firstName"></td>
+                <td data-bind="text:lastName"></td>
+                <td data-bind="text:email"></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <ul class="pagination">
+        <li data-bind="css:pageNumber()>0 ?"><a href="#" aria-label="Previous"><span aria-hidden="true">&laquo;</span></a></li>
+        <li data-bind="click:pageNumber(0)" class="active"><a href="#">1 <span class="sr-only">(current)</span></a></li>
+        <li><a data-bind="click:pageNumber(1)" href="#">2 <span class="sr-only"></span></a></li>
+        <li><a data-bind="click:pageNumber(2)"href="#">3 <span class="sr-only"></span></a></li>
+        <li><a data-bind="click:pageNumber(3)" href="#">4 <span class="sr-only"></span></a></li>
+        ...
+    </ul>
+
+
+    <script>
+
+        function Person(fname,lname,email) {
+            this.firstName = fname;
+            this.lastName = lname;
+            this.email = email;
+        }
+
+        function ViewModel() {
+            var self = this;
+            self.pageNumber = ko.observable(0);
+            self.changePageNumber = function (num) {
+                self.pageNumber(num);
+            }
+            self.pageSize = ko.observable(5);
+            self.items = ko.observableArray();
+            self.numPages = ko.computed(function () {
+                return self.items.length / self.pageSize();
+            });
+
+            self.activeItems = ko.computed(function () {
+                var startind=self.pageSize()*self.pageNumber();
+                var stopind=startind+self.pageSize()
+                return self.items.slice(startind, stopind);
+            });
+            
+
+            self.addItem = function (p) {
+                self.items.push(p);
+            }
+        }
+
+        var viewModel = new ViewModel();
+
+        $(function () {
+            $.ajax({
+                accept: "Application/json",
+                method: "GET",
+                url:"/scripts/JSONData.json"
+            }).success(function (data) {
+                $.each(data, function (index, item) {
+                    var p = new Person(item.fname, item.lname, item.email);
+                    viewModel.addItem(p);
+                });
+            }).fail(function (data, resp) {
+                alert(resp.responseText);
+            });
+
+            ko.applyBindings(viewModel);
+        });
+
+    </script>
+
+    
+</body>
+</html>

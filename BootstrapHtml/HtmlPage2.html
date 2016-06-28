@@ -1,0 +1,122 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+	<meta charset="utf-8" />
+    <link href="Content/bootstrap.css" rel="stylesheet" />
+    <script src="Scripts/jquery-2.2.3.js"></script>
+    <script src="Scripts/bootstrap.min.js"></script>
+    <script src="Scripts/knockout-3.4.0.js"></script>
+<style>
+    .control-label {
+        text-align:left;
+    }
+
+</style>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-10">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Förnamn</th>
+                            <th>Efternamn</th>
+                            <th>Email</th>
+                        </tr>
+                    </thead>
+                    
+                    <tbody data-bind="foreach:pageData">
+                        <tr>
+                            <td data-bind="text:fName"></td>
+
+                            <td data-bind="text:eName"></td>
+
+                            <td data-bind="text:eMail"></td>
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+                <ul data-bind="foreach:pages" class="pagination">
+                    <li data-bind="css:{active:$parent.activePage()==num}"><a  href="#" data-bind="click:function(){$parent.changePage(num)},text:(num+1)"></a></li>
+                </ul>
+<!--
+                <ul  class="pagination"> 
+                    <li data-bind="css:{active:activePage()==0}"><a data-bind="click:function(){changePage(0)}" href="#">1</a></li>
+                    <li data-bind="css:{active:activePage()==1}"><a  data-bind="click:function(){changePage(1)}" href="#">2</a></li>
+                    <li data-bind="css:{active:activePage()==2}"><a data-bind="click:function(){changePage(2)}" href="#">3</a></li>
+                </ul>-->
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+
+        function person(fname,ename,email) {
+            this.fName = fname;
+            this.eName = ename;
+            this.eMail = email;
+        }
+
+        function pageViewModel() {
+            var self = this;
+            
+            self.activePage = ko.observable(0);
+            self.pageSize   = ko.observable(5);
+
+            self.persons = ko.observableArray();
+
+            self.totalPages = ko.computed(function () {
+                return self.persons().length / self.pageSize();
+            });
+
+            self.pages = ko.computed(function () {
+                var arr = [];
+                for (var i = 0; i < self.totalPages(); i++) {
+                    arr.push({num:i});
+                }
+                return arr;
+            });
+
+            self.changePage = function (num) {
+               self.activePage(num);
+                
+            };
+
+            self.pageData = ko.computed(function () {
+                var start = self.activePage() * self.pageSize();
+                var stop = start + self.pageSize();
+                return self.persons.slice(start, stop);
+            });
+
+            self.add = function (p) {
+                self.persons.push(p);
+            };
+        }
+
+        var ViewModel = new pageViewModel();
+
+        $(function () {
+            $.ajax({
+                url: "/scripts/JSONData.json",
+                method: "GET",
+                accept: "application/json"
+            }).success(function(data) {
+                $.each(data, function (index, item) {
+                    var p = new person(item.fname, item.lname, item.email);
+                    ViewModel.add(p);
+                });
+              })
+              .fail(function (data,resp) {
+                  alert(resp.responseText);
+              });
+            ko.applyBindings(ViewModel);
+        });
+
+    </script>
+</body>
+</html>
